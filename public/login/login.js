@@ -142,6 +142,65 @@
 // });
 
 
+//jat1
+// const form = document.getElementById("login-form");
+
+// form.addEventListener("submit", async (e) => {
+//   e.preventDefault();
+
+//   const email = document.querySelector('input[name="email"]').value;
+//   const password = document.querySelector('input[name="password"]').value;
+
+//   try {
+//     const response = await fetch("/login", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ email: email, password: password }),
+//     });
+
+//     const data = await response.json();
+
+//     if (response.ok) {
+//       const role = data.user.role;
+      
+//       // Redirect based on role
+//       if (role === 'admin' || role === 'staff') {
+//         window.location.href = "/dashboard/dashboard.html";
+//       } else if (role === 'doctor') {
+//         window.location.href = "/doctor/doctor.html";
+//       } else if (role === 'patient') {
+//         window.location.href = "/homepage/homepage.html";
+//       } else {
+//         window.location.href = "/homepage/homepage.html";
+//       }
+//     } else {
+//       alert(data.message || "Login failed");
+//     }
+//   } catch (error) {
+//     console.error("Login error:", error);
+//     alert("Error connecting to server");
+//   }
+// });
+
+// // Password toggle
+// document.addEventListener("DOMContentLoaded", function () {
+//   const togglePassword = document.querySelector("#togglePassword");
+//   const password = document.querySelector("#password");
+
+//   if (togglePassword && password) {
+//     togglePassword.addEventListener("click", function () {
+//       const type =
+//         password.getAttribute("type") === "password" ? "text" : "password";
+//       password.setAttribute("type", type);
+
+//       this.innerHTML =
+//         type === "password"
+//           ? '<i class="bi bi-eye"></i>'
+//           : '<i class="bi bi-eye-slash"></i>';
+//     });
+//   }
+// });
+
 
 const form = document.getElementById("login-form");
 
@@ -161,18 +220,9 @@ form.addEventListener("submit", async (e) => {
     const data = await response.json();
 
     if (response.ok) {
-      const role = data.user.role;
-      
-      // Redirect based on role
-      if (role === 'admin' || role === 'staff') {
-        window.location.href = "/dashboard/dashboard.html";
-      } else if (role === 'doctor') {
-        window.location.href = "/doctor/doctor.html";
-      } else if (role === 'patient') {
-        window.location.href = "/homepage/homepage.html";
-      } else {
-        window.location.href = "/homepage/homepage.html";
-      }
+      // ✅ ALL users redirect to header_menu
+      // The header_menu.js will load the correct page in the iframe based on role
+      window.location.href = "/header_menu/header_menu.html";
     } else {
       alert(data.message || "Login failed");
     }
