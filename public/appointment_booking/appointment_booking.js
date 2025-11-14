@@ -218,7 +218,7 @@ $(document).ready(function () {
       $("#age").val(`${data.age}`).prop("readonly", true);
       $("#role").val(`${data.role}`).prop("readonly", true);
       $("#role_list").val(`${data.role}`).prop("readonly", true);
-      $("#mobileNum2").val(`${data.phone}`).prop("readonly", true);
+      $("#mobileNum2").val(`${data.phone}`);
       $("#email").val(`${data.email}`).prop("readonly", true);
       if (`${data.role}` == "patient") {
         $("#patientName").prop("readonly", true);
