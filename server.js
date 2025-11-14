@@ -20,7 +20,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // --- Static File Serving ---
-app.use(express.static(path.join(__dirname, "web_immacare")));
+//app.use(express.static(path.join(__dirname, "web_immacare")));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/bootstrap", express.static(path.join(__dirname, "node_modules/bootstrap/dist")));
 app.use("/bootstrap-icons", express.static(path.join(__dirname, "node_modules/bootstrap-icons")));
@@ -132,15 +132,53 @@ const transporter = nodemailer.createTransport({
 // --- Initial Route Fix ---
 // 1. Root route: This redirect is correct because 'public' is a static directory.
 // The browser requests /landingpage/landingpage.html, which Express finds in /public.
-app.get("/", (req, res) => res.redirect("/landingpage/landingpage.html")); 
+app.get("/", (req, res) => res.redirect("/landingpage.html")); 
 
 // 2. The /landing route (Absolute Path) MUST be corrected to include the 'public' folder.
 // This is the line that was failing on the deployment server.
-app.get("/landing", (req, res) => res.sendFile(path.join(__dirname, "public", "landingpage", "landingpage.html")));
+app.get("/landingpage.html", (req, res) => res.sendFile(path.join(__dirname, "public", "landingpage", "landingpage.html")));
+
+// Route 3: Alternative /landing route
+app.get("/landing", (req, res) => {
+    res.redirect("/landingpage.html");
+});
+
+// Route for other landing page services
+app.get("/2d_echo.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "2d_echo.html"));
+});
+
+app.get("/earpiercing.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "earpiercing.html"));
+});
+
+// Add routes for other service pages as needed...
+app.get("/ecg.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "ecg.html"));
+});
+
+app.get("/ent.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "ent.html"));
+});
 
 // =================================================================
 // --- AUTHENTICATION & REGISTRATION API ENDPOINTS ---
 // =================================================================
+
+// Route for login
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "login", "login.html"));
+});
+
+// Route for appointment booking
+app.get("/appointment", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "appointment_booking", "appointment_booking.html"));
+});
+
+// Route for dashboard
+app.get("/dashboard", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "dashboard", "dashboard.html"));
+});
 
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
@@ -820,7 +858,9 @@ app.get("/getAllPatients", async (req, res) => {
 // --- Server Start ---
 const PORT = process.env.PORT || 3000; // <--- ADD || 3000 FOR LOCAL FALLBACK
 app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}/landingpage/landingpage.html`);
+     console.log(`Server is running at http://localhost:${PORT}`);
+  console.log(`Server is running at http://localhost:${PORT}/landingpage.html`);
+   console.log(`Direct landing: http://localhost:${PORT}/landing`);
 });
 
 
