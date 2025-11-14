@@ -142,6 +142,32 @@ app.get("/landingpage.html", (req, res) => res.sendFile(path.join(__dirname, "pu
 app.get("/landing", (req, res) => {
     res.redirect("/landingpage.html");
 });
+// Doctor Routes
+app.get("/doctor", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "doctor", "doctor.html"));
+});
+
+app.get("/doctor/doctor.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "doctor", "doctor.html"));
+});
+
+// Delete Routes (if you have delete functionality)
+app.get("/delete/delete_Mut", (req, res) => {
+    // If this is a page, serve the HTML file
+    // If this should be an API endpoint, change to app.delete()
+    res.redirect("/dashboard"); // Temporary redirect
+});
+
+// API endpoint for delete (if needed)
+app.delete("/delete/:id", async (req, res) => {
+    // Your delete logic here
+    res.json({ message: "Delete endpoint" });
+});
+
+// Additional common routes you might need
+app.get("/financial-report", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "financial_report", "financial_report.html"));
+});
 
 // Route for other landing page services
 app.get("/2d_echo.html", (req, res) => {
@@ -257,6 +283,11 @@ app.get("/verify-email", async (req, res) => {
         console.error("Email verification error:", err);
         res.status(500).send("<h3>A server error occurred during email verification.</h3>");
     }
+});
+
+
+app.get("/header-menu", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "header_menu", "header_menu.html"));
 });
 
 app.get("/homepage", (req, res) => {
