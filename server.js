@@ -144,11 +144,11 @@ app.get("/landing", (req, res) => {
 });
 // Doctor Routes
 app.get("/doctor", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "doctor", "doctor.html"));
+    res.sendFile(path.join(__dirname, "public", "doctor", "doctors.html"));
 });
 
-app.get("/doctor/doctor.html", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "doctor", "doctor.html"));
+app.get("/doctor/doctors.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "doctor", "doctors.html"));
 });
 
 // Delete Routes (if you have delete functionality)
