@@ -179,7 +179,8 @@ function renderCalendar(date) {
 }
 let role;
 $(document).ready(function () {
-  fetch("http://localhost:3000/homepage", {
+  // fetch("http://localhost:3000/homepage", {
+  fetch("/homepage", {
     method: "GET",
     credentials: "include",
   })

@@ -109,8 +109,86 @@ $(document).ready(function () {
   }
 });
 
+
+//jat
+// function getSession() {
+//   fetch("http://localhost:3000/homepage", {
+//     method: "GET",
+//     credentials: "include",
+//   })
+//     .then((response) => {
+//       if (!response.ok) {
+//         return response.json().then((err) => {
+//           throw new Error(err.message);
+//         });
+//       }
+//       return response.json();
+//     })
+//     .then((data) => {
+//       const rawDate = data.birthdate;
+//       let formattedDate = "";
+//       if (rawDate) {
+//         const dateObj = new Date(rawDate);
+//         if (!isNaN(dateObj)) {
+//           formattedDate = dateObj.toISOString().split("T")[0];
+//           $("#birthdate").val(formattedDate);
+//         } else {
+//           $("#birthdate").val(""); // Or handle as you prefer
+//         }
+//       } else {
+//         $("#birthdate").val("");
+//       }
+
+//       $(".form-control").addClass("readonly");
+//       $(".form-control").prop("readonly", "true");
+//       $("select").prop("disabled", true);
+//       $("#user_id").val(`${data.user_id}`);
+//       $("#role").val(`${data.role}`);
+//       $(".criteria").removeClass("readonly");
+//       $(".criteria").prop("readonly", false);
+//       if (`${data.role}` == "patient") {
+//         $("#backDoctor").hide();
+//         $("#editPatientProfile").show();
+//         $("#giveReco").hide();
+
+//         $("#user_id").val(`${data.user_id}`);
+//         $("#firstname").val(`${data.firstname}`);
+//         $("#middlename").val(`${data.middlename}`);
+//         $("#lastname").val(`${data.lastname}`);
+//         $("#gender").val(`${data.gender}`);
+
+//         $("#age").val(data.age != null ? data.age : "");
+//         $("#mobileNum").val(`${data.phone}`.replace("+", ""));
+//         $("#email").val(`${data.email}`);
+//         patientDetails(`${data.user_id}`);
+//       } else {
+//         $("#backDoctor").show();
+//         $("#editPatientProfile").hide();
+//       }
+
+//       if (`${data.role}` === "doctor") {
+//         $("#backDoctor").attr(
+//           "href",
+//           "../appointment_booking/appointment_list.html"
+//         );
+//       } else {
+//         $("#backDoctor").attr("href", "../patient/patient_list.html");
+//       }
+
+//       if (`${data.role}` !== "doctor") {
+//         $("#giveReco").hide();
+//       }
+
+//       patientViewHistory(`${data.user_id}`);
+//     })
+//     .catch((error) => {
+//       console.error("Error:", error.message);
+//     });
+// }
+
+//jat
 function getSession() {
-  fetch("http://localhost:3000/homepage", {
+  fetch("/homepage", {  // ✅ Changed to relative URL
     method: "GET",
     credentials: "include",
   })
@@ -131,7 +209,7 @@ function getSession() {
           formattedDate = dateObj.toISOString().split("T")[0];
           $("#birthdate").val(formattedDate);
         } else {
-          $("#birthdate").val(""); // Or handle as you prefer
+          $("#birthdate").val(""); 
         }
       } else {
         $("#birthdate").val("");
@@ -181,8 +259,11 @@ function getSession() {
     })
     .catch((error) => {
       console.error("Error:", error.message);
+      // ✅ Added: Redirect to login if not authenticated
+      window.location.href = "/login";
     });
 }
+
 
 function patientViewHistory(user_id_val) {
   const patientHistoryViewEl = document.getElementById("patientHistoryView");
