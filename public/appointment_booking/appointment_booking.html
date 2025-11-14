@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -195,4 +195,176 @@
       </div>
     </div>
   </body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Booking</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+    <style>
+        .appointment-form {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 12px;
+            font-size: 16px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+        
+        .btn-book {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-book:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/assets/images/immaculate.png" alt="Logo" height="40">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/appointment">Book Appointment</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/appointment-list">Appointment List</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/my-profile">My Profile</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Appointment Form -->
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="appointment-form">
+                    <h2 class="text-center mb-4">APPOINTMENT BOOKING</h2>
+                    
+                    <form id="appointmentForm">
+                        <!-- Consultation Type -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Select Consultation Type:</label>
+                                <select class="form-select" id="consultationType" required>
+                                    <option value="">Choose consultation type...</option>
+                                    <option value="1">General Consultation</option>
+                                    <option value="2">Specialist Consultation</option>
+                                    <option value="3">Emergency</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Doctor Selection -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Select Your Doctor:</label>
+                                <select class="form-select" id="doctorSelect" required>
+                                    <option value="">Choose a doctor...</option>
+                                    <option value="1">Dr. Nicole Testa</option>
+                                    <option value="2">Dr. John Smith</option>
+                                    <option value="3">Dr. Maria Garcia</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Date and Time -->
+                        <div class="row mb-3">
+                            <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                <label class="form-label">Preferred Date:</label>
+                                <input type="date" class="form-control" id="bookingDate" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Preferred Time:</label>
+                                <select class="form-select" id="bookingTime" required>
+                                    <option value="">Select time...</option>
+                                    <option value="09:00">09:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="14:00">02:00 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Patient Information -->
+                        <div class="row mb-3">
+                            <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                <label class="form-label">First Name:</label>
+                                <input type="text" class="form-control" value="Nicole" readonly>
+                            </div>
+                            <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                <label class="form-label">Last Name:</label>
+                                <input type="text" class="form-control" value="Testa" readonly>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Contact Number:</label>
+                                <input type="tel" class="form-control" placeholder="Your contact number" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-book">BOOK APPOINTMENT</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mobile-specific enhancements
+        if (window.innerWidth < 768) {
+            // Add touch-friendly enhancements
+            document.querySelectorAll('.form-control, .form-select').forEach(element => {
+                element.style.fontSize = '16px'; // Prevent zoom on iOS
+            });
+        }
+        
+        // Form submission
+        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Add your form submission logic here
+            alert('Appointment booked successfully!');
+        });
+    </script>
+</body>
 </html>
