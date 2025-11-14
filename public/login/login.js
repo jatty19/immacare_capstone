@@ -169,7 +169,7 @@ form.addEventListener("submit", async (e) => {
       } else if (role === 'doctor') {
         window.location.href = "/doctor/doctor.html";
       } else if (role === 'patient') {
-        window.location.href = "/appointment_booking/appointment_booking.html";
+        window.location.href = "/homepage/homepage.html";
       } else {
         window.location.href = "/homepage/homepage.html";
       }
