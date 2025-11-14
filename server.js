@@ -13,7 +13,7 @@ const app = express();
 
 // --- Middleware Setup ---
 app.use(cors({
-    origin: true,
+    origin:  ['http://localhost:3000', 'https://immacare-capstone-2.onrender.com'],
     credentials: true
 }));
 app.use(bodyParser.json());
