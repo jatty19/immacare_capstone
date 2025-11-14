@@ -285,7 +285,7 @@ $(document).ready(function () {
         if (role === 'patient') {
           window.location.href = '/appointment_booking/appointment_booking.html';
         } else if (role === 'doctor') {
-          window.location.href = '/doctor/doctor.html';
+          window.location.href = '/doctor/doctors.html';
         } else {
           window.location.href = '/login';
         }
