@@ -34,13 +34,13 @@ app.use("/jquery", express.static(path.join(__dirname, "node_modules/jquery/dist
 // --- Session Management ---
 app.use(
   session({
-    secret: "your-strong-and-secret-key-for-immacare-sessions",
+    secret: process.env.SESSION_SECRET || "your-strong-and-secret-key-for-immacare-sessions",
     resave: false,
     saveUninitialized: false,
     cookie: {
         maxAge: 1000 * 60 * 60 * 24, // 1 day
         httpOnly: true,
-        secure: false // Set to true if using HTTPS
+        secure: process.env.NODE_ENV === 'production' // Set to true if using HTTPS
     },
   })
 );
@@ -48,7 +48,10 @@ app.use(
 // --- MongoDB Connection ---
 //db connection
 const MONGO_URI = "mongodb+srv://bernejojoshua:immacare@immacare.xr6wcn1.mongodb.net/accounts?retryWrites=true&w=majority";
-mongoose.connect(MONGO_URI)
+mongoose.connect(MONGO_URI, {
+     useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
   .then(() => console.log("Successfully connected to MongoDB database."))
   .catch((err) => console.error("MongoDB connection failed: ", err));
 
@@ -186,6 +189,21 @@ app.get("/ecg.html", (req, res) => {
 app.get("/ent.html", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "landingpage", "ent.html"));
 });
+app.get("/dermatology.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "dermatology.html"));
+});
+app.get("/family_planning.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "family_planning.html"));
+});
+app.get("/hearing_screening.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "hearing_screening.html"));
+});
+app.get("/internal_med.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "internal_med.html"));
+});
+app.get("/laboratory.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "laboratory.html"));
+});
 
 // =================================================================
 // --- AUTHENTICATION & REGISTRATION API ENDPOINTS ---
@@ -296,26 +314,20 @@ app.post("/register", async (req, res) => {
     }
 
     const session = await mongoose.startSession();
-    session.startTransaction();
     
     try {
+        await session.startTransaction();
         const normalizedEmail = email.toLowerCase().trim();
         console.log("Checking for existing account with email:", normalizedEmail);
         
-        // Check for existing account with better logging
+        // Check for existing account
         const existingAccount = await AccountInfo.findOne({ 
             email: normalizedEmail 
         }).session(session);
         
         if (existingAccount) {
-            console.log("Email already exists in database:", {
-                existingEmail: existingAccount.email,
-                existingUserId: existingAccount.user_id,
-                requestedEmail: normalizedEmail
-            });
-            
+            console.log("Email already exists in database");
             await session.abortTransaction();
-            session.endSession();
             return res.status(409).json({ message: "Email is already in use" });
         }
 
@@ -354,9 +366,9 @@ app.post("/register", async (req, res) => {
         console.log("Account created for user:", savedUserProfile._id);
         
         await session.commitTransaction();
-        session.endSession();
+        console.log("Transaction committed successfully");
 
-        // Send verification email (update the URL for production)
+        // Send verification email
         const verificationLink = `https://immacare-capstone-2.onrender.com/verify-email?token=${verificationToken}`;
         const mailOptions = { 
             from: '"ImmaCare+" <immacareclinic@gmail.com>', 
@@ -382,8 +394,10 @@ app.post("/register", async (req, res) => {
         });
         
     } catch (err) {
-        await session.abortTransaction();
-        session.endSession();
+        // FIXED: Only abort transaction if it's still in progress
+        if (session.transaction && session.transaction.isActive) {
+            await session.abortTransaction();
+        }
         
         console.error("Registration error:", {
             error: err.message,
@@ -394,14 +408,17 @@ app.post("/register", async (req, res) => {
         // Check if it's a duplicate key error
         if (err.code === 11000) {
             return res.status(409).json({ 
-                message: "Email is already in use (duplicate key error)" 
+                message: "Email is already in use" 
             });
         }
         
         res.status(500).json({ 
             message: "Server error during registration",
-            error: err.message 
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
         });
+    } finally {
+        // FIXED: Always end the session
+        await session.endSession();
     }
 });
 
