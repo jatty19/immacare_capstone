@@ -157,24 +157,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign Up - ImmaCare+</title>
 
-    <!-- Bootstrap CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <!-- Bootstrap Icons -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-      rel="stylesheet"
-    />
+    <!-- USE LOCAL FILES instead of CDN -->
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/bootstrap-icons/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="signup.css" />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body>
-    <!-- CHANGE: Remove action and method, add id -->
     <form id="signup-form" class="signup-box">
-      <!-- Full Name (letters only) -->
-
       <h3 class="text-center mb-4">Create an Account</h3>
       <h5>Personal Information</h5>
 
@@ -230,13 +219,14 @@
           readonly
         />
       </div>
+      
       <h5>Account Information</h5>
 
       <input
         type="tel"
         id="phone"
         name="phone"
-        placeholder="Phone Number"
+        placeholder="Phone Number (e.g., +639123456789)"
         maxlength="13"
         minlength="13"
         oninput="this.value = this.value.replace(/[^0-9+]/g, '');"
@@ -289,22 +279,32 @@
       </div>
 
       <button type="submit" class="btn btn-primary w-100" id="submitBtn">Sign Up</button>
+      
       <div class="text-center mt-4 noacc">
         <small>
-          Already have an Account? <a href="/login">Login Here</a> <!-- FIXED LINK -->
+          Already have an Account? <a href="/login">Login Here</a>
         </small>
       </div>
     </form>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Use local jQuery or remove if not essential -->
+    <script src="/jquery/jquery.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-      // Add this JavaScript to handle form submission properly
+      // Simple alert function to replace SweetAlert
+      function showAlert(title, message, type = 'error') {
+        alert(`${title}: ${message}`);
+      }
+
       document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('signup-form');
         const submitBtn = document.getElementById('submitBtn');
         
         form.addEventListener('submit', async function(e) {
-          e.preventDefault(); // Prevent traditional form submission
+          e.preventDefault();
+          
+          console.log('Form submission started...');
           
           // Disable button to prevent double submission
           submitBtn.disabled = true;
@@ -324,23 +324,22 @@
             password: formData.get('password')
           };
           
+          console.log('Sending data:', data);
+          
           // Validate passwords match
           const password = formData.get('password');
           const confirmPassword = formData.get('confirmPassword');
           
           if (password !== confirmPassword) {
-            Swal.fire({
-              icon: 'error',
-              title: 'Password Mismatch',
-              text: 'Passwords do not match!'
-            });
+            alert('Error: Passwords do not match!');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Sign Up';
             return;
           }
           
           try {
-            console.log('Sending registration data:', data);
+            const API_BASE = window.location.origin;
+            console.log('Sending to:', `${API_BASE}/register`);
             
             const response = await fetch('/register', {
               method: 'POST',
@@ -350,32 +349,20 @@
               body: JSON.stringify(data)
             });
             
+            console.log('Response status:', response.status);
+            
             const result = await response.json();
             console.log('Server response:', result);
             
             if (response.ok) {
-              Swal.fire({
-                icon: 'success',
-                title: 'Registration Successful!',
-                text: result.message,
-                confirmButtonText: 'OK'
-              }).then(() => {
-                window.location.href = '/login';
-              });
+              alert('Success: ' + result.message);
+              window.location.href = '/login';
             } else {
-              Swal.fire({
-                icon: 'error',
-                title: 'Registration Failed',
-                text: result.message || 'Something went wrong!'
-              });
+              alert('Error: ' + (result.message || 'Registration failed'));
             }
           } catch (error) {
             console.error('Registration error:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Connection Error',
-              text: 'Cannot connect to server. Please try again.'
-            });
+            alert('Connection Error: Cannot connect to server. Please check your internet connection and try again.');
           } finally {
             // Re-enable button
             submitBtn.disabled = false;
