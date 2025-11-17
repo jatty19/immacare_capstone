@@ -204,6 +204,23 @@ app.get("/internal_med.html", (req, res) => {
 app.get("/laboratory.html", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "landingpage", "laboratory.html"));
 });
+app.get("/pediatric.html", (req, res) => {  
+    res.sendFile(path.join(__dirname, "public", "landingpage", "pediatric.html"));
+});
+app.get("/physical_exam.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "physical_exam.html"));
+});
+app.get("/pregnancy_checkup.html", (req, res) => {
+
+    res.sendFile(path.join(__dirname, "public", "landingpage", "pregnancy_checkup.html"));
+});
+app.get("/vaccination.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "vaccination.html"));
+});
+app.get("/surgery.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "landingpage", "surgery.html"));
+});
+
 
 // =================================================================
 // --- AUTHENTICATION & REGISTRATION API ENDPOINTS ---
