@@ -238,37 +238,186 @@ app.post("/login", async (req, res) => {
     }
 });
 
+//jat
+// app.post("/register", async (req, res) => {
+//     const { firstname, middlename, lastname, gender, birthdate, age, phone, email, password } = req.body;
+//     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+//     if (!firstname || !lastname || !gender || !birthdate || !email || !password) return res.status(400).json({ message: "All required fields must be filled" });
+//     if (!emailRegex.test(email)) return res.status(400).json({ message: "Invalid email format" });
+//     const session = await mongoose.startSession();
+//     session.startTransaction();
+//     try {
+//         const existingAccount = await AccountInfo.findOne({ email: email.toLowerCase() }).session(session);
+//         if (existingAccount) {
+//             await session.abortTransaction();
+//             session.endSession();
+//             return res.status(409).json({ message: "Email is already in use" });
+//         }
+//         const newUserProfile = new UserInfo({ firstname, middlename: middlename || null, lastname, gender, birthdate: new Date(birthdate), age, role: 'patient', status: 1 });
+//         const savedUserProfile = await newUserProfile.save({ session });
+//         const hashedPassword = await bcrypt.hash(password, 10);
+//         const verificationToken = crypto.randomBytes(32).toString("hex");
+//         const newAccountInfo = new AccountInfo({ user_id: savedUserProfile._id, phone, email: email.toLowerCase(), password: hashedPassword, verification_token: verificationToken, is_verified: 0, status: 1 });
+//         await newAccountInfo.save({ session });
+//         await session.commitTransaction();
+//         session.endSession();
+//         const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+//         const mailOptions = { from: '"ImmaCare+" <immacareclinic@gmail.com>', to: email, subject: "Email Verification for ImmaCare+", html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h2>Welcome to ImmaCare+</h2><p>Hi ${firstname},</p><p>Thank you for registering. Please click the button below to verify your email address and activate your account:</p><a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify My Email</a><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationLink}</p><p>Best regards,<br>The ImmaCare+ Team</p></div>` };
+//         await transporter.sendMail(mailOptions);
+//         res.status(201).json({ message: "User registered successfully. Please check your email to verify.", userId: savedUserProfile._id });
+//     } catch (err) {
+//         await session.abortTransaction();
+//         session.endSession();
+//         console.error("Registration error:", err);
+//         res.status(500).json({ message: "Server error during registration" });
+//     }
+// });
+
 app.post("/register", async (req, res) => {
     const { firstname, middlename, lastname, gender, birthdate, age, phone, email, password } = req.body;
+    
+    console.log("Registration attempt for:", { 
+        email: email, 
+        firstname: firstname,
+        lastname: lastname 
+    });
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!firstname || !lastname || !gender || !birthdate || !email || !password) return res.status(400).json({ message: "All required fields must be filled" });
-    if (!emailRegex.test(email)) return res.status(400).json({ message: "Invalid email format" });
+    
+    // Validation
+    if (!firstname || !lastname || !gender || !birthdate || !email || !password) {
+        console.log("Missing required fields");
+        return res.status(400).json({ message: "All required fields must be filled" });
+    }
+    
+    if (!emailRegex.test(email)) {
+        console.log("Invalid email format:", email);
+        return res.status(400).json({ message: "Invalid email format" });
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
+    
     try {
-        const existingAccount = await AccountInfo.findOne({ email: email.toLowerCase() }).session(session);
+        const normalizedEmail = email.toLowerCase().trim();
+        console.log("Checking for existing account with email:", normalizedEmail);
+        
+        // Check for existing account with better logging
+        const existingAccount = await AccountInfo.findOne({ 
+            email: normalizedEmail 
+        }).session(session);
+        
         if (existingAccount) {
+            console.log("Email already exists in database:", {
+                existingEmail: existingAccount.email,
+                existingUserId: existingAccount.user_id,
+                requestedEmail: normalizedEmail
+            });
+            
             await session.abortTransaction();
             session.endSession();
             return res.status(409).json({ message: "Email is already in use" });
         }
-        const newUserProfile = new UserInfo({ firstname, middlename: middlename || null, lastname, gender, birthdate: new Date(birthdate), age, role: 'patient', status: 1 });
+
+        console.log("No existing account found, creating new user...");
+        
+        // Create user profile
+        const newUserProfile = new UserInfo({ 
+            firstname: firstname.trim(),
+            middlename: middlename ? middlename.trim() : null, 
+            lastname: lastname.trim(), 
+            gender, 
+            birthdate: new Date(birthdate), 
+            age, 
+            role: 'patient', 
+            status: 1 
+        });
+        
         const savedUserProfile = await newUserProfile.save({ session });
+        console.log("User profile created:", savedUserProfile._id);
+
+        // Create account
         const hashedPassword = await bcrypt.hash(password, 10);
         const verificationToken = crypto.randomBytes(32).toString("hex");
-        const newAccountInfo = new AccountInfo({ user_id: savedUserProfile._id, phone, email: email.toLowerCase(), password: hashedPassword, verification_token: verificationToken, is_verified: 0, status: 1 });
+        
+        const newAccountInfo = new AccountInfo({ 
+            user_id: savedUserProfile._id, 
+            phone: phone ? phone.trim() : null, 
+            email: normalizedEmail, 
+            password: hashedPassword, 
+            verification_token: verificationToken, 
+            is_verified: 0, 
+            status: 1 
+        });
+        
         await newAccountInfo.save({ session });
+        console.log("Account created for user:", savedUserProfile._id);
+        
         await session.commitTransaction();
         session.endSession();
-        const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
-        const mailOptions = { from: '"ImmaCare+" <immacareclinic@gmail.com>', to: email, subject: "Email Verification for ImmaCare+", html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h2>Welcome to ImmaCare+</h2><p>Hi ${firstname},</p><p>Thank you for registering. Please click the button below to verify your email address and activate your account:</p><a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify My Email</a><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationLink}</p><p>Best regards,<br>The ImmaCare+ Team</p></div>` };
+
+        // Send verification email (update the URL for production)
+        const verificationLink = `https://immacare-capstone-2.onrender.com/verify-email?token=${verificationToken}`;
+        const mailOptions = { 
+            from: '"ImmaCare+" <immacareclinic@gmail.com>', 
+            to: normalizedEmail, 
+            subject: "Email Verification for ImmaCare+", 
+            html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <h2>Welcome to ImmaCare+</h2>
+                <p>Hi ${firstname},</p>
+                <p>Thank you for registering. Please click the button below to verify your email address and activate your account:</p>
+                <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify My Email</a>
+                <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                <p>${verificationLink}</p>
+                <p>Best regards,<br>The ImmaCare+ Team</p>
+            </div>` 
+        };
+        
         await transporter.sendMail(mailOptions);
-        res.status(201).json({ message: "User registered successfully. Please check your email to verify.", userId: savedUserProfile._id });
+        console.log("Verification email sent to:", normalizedEmail);
+        
+        res.status(201).json({ 
+            message: "User registered successfully. Please check your email to verify.", 
+            userId: savedUserProfile._id 
+        });
+        
     } catch (err) {
         await session.abortTransaction();
         session.endSession();
-        console.error("Registration error:", err);
-        res.status(500).json({ message: "Server error during registration" });
+        
+        console.error("Registration error:", {
+            error: err.message,
+            stack: err.stack,
+            email: email
+        });
+        
+        // Check if it's a duplicate key error
+        if (err.code === 11000) {
+            return res.status(409).json({ 
+                message: "Email is already in use (duplicate key error)" 
+            });
+        }
+        
+        res.status(500).json({ 
+            message: "Server error during registration",
+            error: err.message 
+        });
+    }
+});
+
+//jat
+// Add this debug route to check existing emails
+app.get("/debug-emails", async (req, res) => {
+    try {
+        const accounts = await AccountInfo.find({}).select('email').sort({ email: 1 });
+        const emails = accounts.map(acc => acc.email);
+        res.json({ 
+            totalAccounts: accounts.length,
+            emails: emails 
+        });
+    } catch (err) {
+        console.error("Debug error:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 

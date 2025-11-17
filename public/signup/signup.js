@@ -273,3 +273,20 @@ signupForm.addEventListener("submit", function (e) {
     alert("Please make sure your password meets all the requirements before signing up.");
   }
 });
+
+//jat
+// PASSWORD VISIBILITY TOGGLE
+const togglePassword = document.getElementById("togglePassword");
+const toggleConfirm = document.getElementById("toggleConfirm");
+
+togglePassword.addEventListener("click", () => {
+  const type = password.getAttribute("type") === "password" ? "text" : "password";
+  password.setAttribute("type", type);
+  togglePassword.classList.toggle("fa-eye-slash");
+});
+
+toggleConfirm.addEventListener("click", () => {
+  const type = confirmPassword.getAttribute("type") === "password" ? "text" : "password";
+  confirmPassword.setAttribute("type", type);
+  toggleConfirm.classList.toggle("fa-eye-slash");
+});
