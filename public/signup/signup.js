@@ -568,240 +568,7 @@
 // // ✅ REMOVED THE SECOND SUBMIT LISTENER - No longer needed!
 
 
-// public/signup-form.js
-// ✅ ADD FLAG to prevent double submission
-let isSubmitting = false;
-
-document.getElementById("signup-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  e.stopImmediatePropagation();
-
-  // ✅ CHECK if already submitting
-  if (isSubmitting) {
-    console.log("Already submitting, please wait...");
-    return;
-  }
-
-  // ✅ Validate password FIRST
-  if (!validatePassword()) {
-    Swal.fire({
-      icon: "error",
-      title: "Password Requirements",
-      text: "Please make sure your password meets all the requirements before signing up.",
-    });
-    return;
-  }
-
-  const formData = new FormData(e.target);
-  const data = Object.fromEntries(formData.entries());
-
-  // ✅ PASSWORD MATCH VALIDATION
-  const password = data.password.trim();
-  const confirmPassword = data.confirmPassword.trim();
-
-  if (password !== confirmPassword) {
-    Swal.fire({
-      icon: "error",
-      title: "Password Mismatch",
-      text: "Your passwords do not match. Please try again.",
-    });
-    return;
-  }
-
-  // ✅ SET FLAG and DISABLE BUTTON
-  isSubmitting = true;
-  const signupBtn = document.querySelector(".btn.btn-primary.w-100");
-  const originalText = signupBtn.innerHTML;
-  signupBtn.disabled = true;
-  signupBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account...';
-
-  try {
-    const response = await fetch("/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      // ✅ SUCCESS
-      Swal.fire({
-        title: "Success!",
-        text: result.message,
-        icon: "success",
-      }).then(() => {
-        window.location.href = "/login";
-      });
-    } else {
-      // ✅ ERROR from server
-      Swal.fire({
-        icon: "error",
-        title: "Registration Failed",
-        text: result.message,
-      });
-      // Re-enable button
-      isSubmitting = false;
-      signupBtn.disabled = false;
-      signupBtn.innerHTML = originalText;
-    }
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Something went wrong while submitting the form.",
-    });
-    console.error("Error:", error);
-    // Re-enable button
-    isSubmitting = false;
-    signupBtn.disabled = false;
-    signupBtn.innerHTML = originalText;
-  }
-});
-
-// BIRTHDATE AND AGE VALIDATION
-const birthdateInput = document.getElementById("birthdate");
-const ageInput = document.getElementById("age");
-
-// Disable future dates
-const today = new Date().toISOString().split("T")[0];
-birthdateInput.setAttribute("max", today);
-
-birthdateInput.addEventListener("change", () => {
-  const birthdateValue = birthdateInput.value;
-  if (!birthdateValue) {
-    ageInput.value = "";
-    return;
-  }
-
-  const birthDate = new Date(birthdateValue);
-  const todayDate = new Date();
-
-  let age = todayDate.getFullYear() - birthDate.getFullYear();
-  const monthDiff = todayDate.getMonth() - birthDate.getMonth();
-  const dayDiff = todayDate.getDate() - birthDate.getDate();
-
-  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-    age--;
-  }
-
-  if (age < 1) {
-    ageInput.value = "";
-  } else {
-    ageInput.value = age;
-  }
-});
-
-// NAME FORMATTER
-function capitalizeEachWord(str) {
-  return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function isAllUppercase(str) {
-  return str === str.toUpperCase() && /[A-Z]/.test(str);
-}
-
-const nameFields = ["firstName", "middleName", "lastName"];
-
-nameFields.forEach((id) => {
-  const input = document.getElementById(id);
-
-  input.addEventListener("input", () => {
-    let value = input.value;
-
-    if (isAllUppercase(value)) {
-      value = value.toLowerCase();
-    }
-
-    value = capitalizeEachWord(value);
-    input.value = value;
-  });
-});
-
-// PHONE NUMBER FORMAT
-const phoneInput = document.getElementById("phone");
-const prefix = "+639";
-
-phoneInput.addEventListener("focus", () => {
-  if (!phoneInput.value.startsWith(prefix)) {
-    phoneInput.value = prefix;
-  }
-});
-
-phoneInput.addEventListener("input", () => {
-  if (!phoneInput.value.startsWith(prefix)) {
-    const numbersOnly = phoneInput.value.replace(/\D/g, "");
-    phoneInput.value = prefix + numbersOnly.replace(/^639?/, "");
-  }
-});
-
-phoneInput.addEventListener("keydown", (e) => {
-  if (
-    phoneInput.selectionStart <= prefix.length &&
-    (e.key === "Backspace" || e.key === "ArrowLeft")
-  ) {
-    e.preventDefault();
-  }
-});
-
-// EMAIL FORMATTER
-const emailInput = document.getElementById("email");
-
-function formatEmail() {
-  let value = emailInput.value.trim();
-
-  const atIndex = value.indexOf("@");
-  if (atIndex !== -1) {
-    const local = value.slice(0, atIndex);
-    const domain = value.slice(atIndex).toLowerCase();
-
-    if (domain.startsWith("@gmail.com") || domain === "") {
-      emailInput.value = local + domain;
-    } else {
-      emailInput.value = local + "@gmail.com";
-    }
-  }
-}
-
-emailInput.addEventListener("input", formatEmail);
-emailInput.addEventListener("blur", formatEmail);
-
-// NAME FIELD BLOCK SPECIAL CHARACTERS & NUMBERS
-function blockSpecialCharacters(inputElement) {
-  inputElement.value = inputElement.value.replace(/[^A-Za-z ]/g, "");
-}
-
-const nameInputs = ["firstName", "middleName", "lastName"];
-nameInputs.forEach((id) => {
-  const input = document.getElementById(id);
-  input.addEventListener("input", () => blockSpecialCharacters(input));
-});
-
-const nameSFields = [
-  document.getElementById("firstName"),
-  document.getElementById("middleName"),
-  document.getElementById("lastName"),
-];
-
-nameSFields.forEach((input) => {
-  input.addEventListener("keydown", function (event) {
-    const allowedKeys = [
-      "Backspace",
-      "ArrowLeft",
-      "ArrowRight",
-      "Tab",
-      "Delete",
-      " ",
-    ];
-    if (
-      event.key >= "0" &&
-      event.key <= "9" &&
-      !allowedKeys.includes(event.key)
-    ) {
-      event.preventDefault();
-    }
-  });
-});
+// ... (keep all your existing code: submit handler, birthdate, name formatter, etc.)
 
 // PASSWORD VALIDATION
 const password = document.getElementById("password");
@@ -843,7 +610,6 @@ function validatePassword() {
     checks.special &&
     isMatch;
 
-  // ✅ Only enable/disable if not currently submitting
   if (!isSubmitting) {
     signupBtn.disabled = !allValid;
     signupBtn.style.opacity = allValid ? "1" : "0.6";
@@ -856,10 +622,38 @@ function validatePassword() {
 password.addEventListener("input", validatePassword);
 confirmPassword.addEventListener("input", validatePassword);
 
-// ✅ Initialize on page load
+// ✅ Initialize on page load WITH PASSWORD TOGGLE
 document.addEventListener("DOMContentLoaded", function() {
   // Run validation to set initial button state
   validatePassword();
   
-  console.log("Signup form initialized - button will enable when password requirements are met");
+  // ✅ Password toggle for main password field
+  const togglePassword = document.querySelector("#togglePassword");
+  const toggleConfirmPassword = document.querySelector("#toggleConfirmPassword");
+  const passwordField = document.getElementById("password");
+  const confirmPasswordField = document.getElementById("confirmPassword");
+
+  if (togglePassword && passwordField) {
+    togglePassword.addEventListener("click", function() {
+      const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
+      passwordField.setAttribute("type", type);
+      
+      this.innerHTML = type === "password" 
+        ? '<i class="bi bi-eye"></i>' 
+        : '<i class="bi bi-eye-slash"></i>';
+    });
+  }
+
+  if (toggleConfirmPassword && confirmPasswordField) {
+    toggleConfirmPassword.addEventListener("click", function() {
+      const type = confirmPasswordField.getAttribute("type") === "password" ? "text" : "password";
+      confirmPasswordField.setAttribute("type", type);
+      
+      this.innerHTML = type === "password" 
+        ? '<i class="bi bi-eye"></i>' 
+        : '<i class="bi bi-eye-slash"></i>';
+    });
+  }
+  
+  console.log("Signup form initialized with password toggle");
 });
