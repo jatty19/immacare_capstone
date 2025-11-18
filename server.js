@@ -260,7 +260,11 @@ app.post("/register", async (req, res) => {
         await newAccountInfo.save({ session });
         await session.commitTransaction();
         session.endSession();
-        const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+        const baseUrl = req.get('host').includes('localhost') 
+  ? 'http://localhost:3000' 
+  : 'https://immacare-capstone-2.onrender.com';
+    const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
+       // const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
         const mailOptions = { from: '"ImmaCare+" <immacareclinic@gmail.com>', to: email, subject: "Email Verification for ImmaCare+", html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h2>Welcome to ImmaCare+</h2><p>Hi ${firstname},</p><p>Thank you for registering. Please click the button below to verify your email address and activate your account:</p><a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify My Email</a><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationLink}</p><p>Best regards,<br>The ImmaCare+ Team</p></div>` };
         await transporter.sendMail(mailOptions);
         res.status(201).json({ message: "User registered successfully. Please check your email to verify.", userId: savedUserProfile._id });
