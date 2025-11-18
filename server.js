@@ -128,6 +128,15 @@ const transporter = nodemailer.createTransport({
         pass: "kemc tadf myzz ofzq",
     },
 });
+
+transporter.verify(function (error, success) {
+  if (error) {
+    console.error("❌ Email configuration error:", error);
+  } else {
+    console.log("✅ Email server is ready to send messages");
+  }
+});
+
 // --- Initial Route Fix ---
 // --- Initial Route Fix ---
 // 1. Root route: This redirect is correct because 'public' is a static directory.
@@ -206,6 +215,118 @@ app.get("/dashboard", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "dashboard", "dashboard.html"));
 });
 
+app.post("/register", async (req, res) => {
+    const { firstname, middlename, lastname, gender, birthdate, age, phone, email, password } = req.body;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!firstname || !lastname || !gender || !birthdate || !email || !password) {
+        return res.status(400).json({ message: "All required fields must be filled" });
+    }
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+    }
+    
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+        const existingAccount = await AccountInfo.findOne({ email: email.toLowerCase() }).session(session);
+        if (existingAccount) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(409).json({ message: "Email is already in use" });
+        }
+        
+        const newUserProfile = new UserInfo({ 
+            firstname, 
+            middlename: middlename || null, 
+            lastname, 
+            gender, 
+            birthdate: new Date(birthdate), 
+            age, 
+            role: 'patient', 
+            status: 1 
+        });
+        const savedUserProfile = await newUserProfile.save({ session });
+        
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+        
+        const newAccountInfo = new AccountInfo({ 
+            user_id: savedUserProfile._id, 
+            phone, 
+            email: email.toLowerCase(), 
+            password: hashedPassword, 
+            verification_token: verificationToken, 
+            is_verified: 0, 
+            status: 1 
+        });
+        await newAccountInfo.save({ session });
+        
+        await session.commitTransaction();
+        session.endSession();
+        
+        // ✅ Dynamic base URL
+        const baseUrl = req.get('host').includes('localhost') 
+            ? 'http://localhost:3000' 
+            : `https://${req.get('host')}`;
+        const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
+        
+        const mailOptions = { 
+            from: '"ImmaCare+" <immacareclinic@gmail.com>', 
+            to: email, 
+            subject: "Email Verification for ImmaCare+", 
+            html: `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #4CAF50;">Welcome to ImmaCare+</h2>
+                    <p>Hi <strong>${firstname}</strong>,</p>
+                    <p>Thank you for registering with ImmaCare+. Please verify your email address to activate your account.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${verificationLink}" 
+                           style="background-color: #4CAF50; 
+                                  color: white; 
+                                  padding: 12px 30px; 
+                                  text-decoration: none; 
+                                  border-radius: 5px;
+                                  display: inline-block;
+                                  font-weight: bold;">
+                            Verify My Email
+                        </a>
+                    </div>
+                    <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 5px;">
+                        ${verificationLink}
+                    </p>
+                    <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                        This link will expire in 24 hours. If you didn't create an account, please ignore this email.
+                    </p>
+                    <p>Best regards,<br><strong>The ImmaCare+ Team</strong></p>
+                </div>
+            ` 
+        };
+        
+        // ✅ Try sending email
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log(`✅ Verification email sent to: ${email}`);
+        } catch (emailError) {
+            console.error("❌ Email send error:", emailError);
+            // Don't fail registration if email fails
+        }
+        
+        res.status(201).json({ 
+            message: "Registration successful! Please check your email to verify your account.", 
+            userId: savedUserProfile._id 
+        });
+        
+    } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
+        console.error("Registration error:", err);
+        res.status(500).json({ message: "Server error during registration" });
+    }
+});
+
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
@@ -238,43 +359,46 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.post("/register", async (req, res) => {
-    const { firstname, middlename, lastname, gender, birthdate, age, phone, email, password } = req.body;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!firstname || !lastname || !gender || !birthdate || !email || !password) return res.status(400).json({ message: "All required fields must be filled" });
-    if (!emailRegex.test(email)) return res.status(400).json({ message: "Invalid email format" });
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    try {
-        const existingAccount = await AccountInfo.findOne({ email: email.toLowerCase() }).session(session);
-        if (existingAccount) {
-            await session.abortTransaction();
-            session.endSession();
-            return res.status(409).json({ message: "Email is already in use" });
-        }
-        const newUserProfile = new UserInfo({ firstname, middlename: middlename || null, lastname, gender, birthdate: new Date(birthdate), age, role: 'patient', status: 1 });
-        const savedUserProfile = await newUserProfile.save({ session });
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const verificationToken = crypto.randomBytes(32).toString("hex");
-        const newAccountInfo = new AccountInfo({ user_id: savedUserProfile._id, phone, email: email.toLowerCase(), password: hashedPassword, verification_token: verificationToken, is_verified: 0, status: 1 });
-        await newAccountInfo.save({ session });
-        await session.commitTransaction();
-        session.endSession();
-        const baseUrl = req.get('host').includes('localhost') 
-  ? 'http://localhost:3000' 
-  : 'https://immacare-capstone-2.onrender.com';
-    const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
-       // const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
-        const mailOptions = { from: '"ImmaCare+" <immacareclinic@gmail.com>', to: email, subject: "Email Verification for ImmaCare+", html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h2>Welcome to ImmaCare+</h2><p>Hi ${firstname},</p><p>Thank you for registering. Please click the button below to verify your email address and activate your account:</p><a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify My Email</a><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationLink}</p><p>Best regards,<br>The ImmaCare+ Team</p></div>` };
-        await transporter.sendMail(mailOptions);
-        res.status(201).json({ message: "User registered successfully. Please check your email to verify.", userId: savedUserProfile._id });
-    } catch (err) {
-        await session.abortTransaction();
-        session.endSession();
-        console.error("Registration error:", err);
-        res.status(500).json({ message: "Server error during registration" });
-    }
-});
+
+
+
+// app.post("/register", async (req, res) => {
+//     const { firstname, middlename, lastname, gender, birthdate, age, phone, email, password } = req.body;
+//     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+//     if (!firstname || !lastname || !gender || !birthdate || !email || !password) return res.status(400).json({ message: "All required fields must be filled" });
+//     if (!emailRegex.test(email)) return res.status(400).json({ message: "Invalid email format" });
+//     const session = await mongoose.startSession();
+//     session.startTransaction();
+//     try {
+//         const existingAccount = await AccountInfo.findOne({ email: email.toLowerCase() }).session(session);
+//         if (existingAccount) {
+//             await session.abortTransaction();
+//             session.endSession();
+//             return res.status(409).json({ message: "Email is already in use" });
+//         }
+//         const newUserProfile = new UserInfo({ firstname, middlename: middlename || null, lastname, gender, birthdate: new Date(birthdate), age, role: 'patient', status: 1 });
+//         const savedUserProfile = await newUserProfile.save({ session });
+//         const hashedPassword = await bcrypt.hash(password, 10);
+//         const verificationToken = crypto.randomBytes(32).toString("hex");
+//         const newAccountInfo = new AccountInfo({ user_id: savedUserProfile._id, phone, email: email.toLowerCase(), password: hashedPassword, verification_token: verificationToken, is_verified: 0, status: 1 });
+//         await newAccountInfo.save({ session });
+//         await session.commitTransaction();
+//         session.endSession();
+//         const baseUrl = req.get('host').includes('localhost') 
+//   ? 'http://localhost:3000' 
+//   : `https://${req.get('host')}`;
+// const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
+//        // const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+//         const mailOptions = { from: '"ImmaCare+" <immacareclinic@gmail.com>', to: email, subject: "Email Verification for ImmaCare+", html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h2>Welcome to ImmaCare+</h2><p>Hi ${firstname},</p><p>Thank you for registering. Please click the button below to verify your email address and activate your account:</p><a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify My Email</a><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationLink}</p><p>Best regards,<br>The ImmaCare+ Team</p></div>` };
+//         await transporter.sendMail(mailOptions);
+//         res.status(201).json({ message: "User registered successfully. Please check your email to verify.", userId: savedUserProfile._id });
+//     } catch (err) {
+//         await session.abortTransaction();
+//         session.endSession();
+//         console.error("Registration error:", err);
+//         res.status(500).json({ message: "Server error during registration" });
+//     }
+// });
 
 app.get("/verify-email", async (req, res) => {
     try {

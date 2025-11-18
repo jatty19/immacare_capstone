@@ -600,10 +600,34 @@ document.getElementById("signup-form").addEventListener("submit", async (e) => {
 
     const result = await response.json();
 
-    Swal.fire({
-      title: result.message,
-      icon: "success",
-    });
+    if (response.ok) {
+      // ✅ SUCCESS - Show verification message
+      Swal.fire({
+        title: "Registration Successful!",
+        html: `
+          <p>${result.message}</p>
+          <br>
+          <strong>Please check your email inbox for the verification link.</strong>
+          <br><br>
+          <small>Check your spam/junk folder if you don't see it.</small>
+        `,
+        icon: "success",
+        confirmButtonText: "Go to Login"
+      }).then(() => {
+        window.location.href = "/login";
+      });
+    } else {
+      // ✅ ERROR from server
+      Swal.fire({
+        icon: "error",
+        title: "Registration Failed",
+        text: result.message,
+      });
+      // Re-enable button
+      isSubmitting = false;
+      signupBtn.disabled = false;
+      signupBtn.innerHTML = originalText;
+    }
   } catch (error) {
     Swal.fire({
       icon: "error",
@@ -611,6 +635,10 @@ document.getElementById("signup-form").addEventListener("submit", async (e) => {
       text: "Something went wrong while submitting the form.",
     });
     console.error("Error:", error);
+    // Re-enable button
+    isSubmitting = false;
+    signupBtn.disabled = false;
+    signupBtn.innerHTML = originalText;
   }
 });
 
