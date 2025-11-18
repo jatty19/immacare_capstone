@@ -1216,8 +1216,17 @@ app.post("/register", async (req, res) => {
         await newAccountInfo.save({ session });
         await session.commitTransaction();
         session.endSession();
-        const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
-        const mailOptions = { from: '"ImmaCare+" <bernejojoshua@gmail.com>', to: email, subject: "Email Verification for ImmaCare+", html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h2>Welcome to ImmaCare+</h2><p>Hi ${firstname},</p><p>Thank you for registering. Please click the button below to verify your email address and activate your account:</p><a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify My Email</a><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationLink}</p><p>Best regards,<br>The ImmaCare+ Team</p></div>` };
+        const baseUrl = req.get('host').includes('localhost') 
+            ? 'http://localhost:3000' 
+            : `https://${req.get('host')}`;
+        const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
+        //const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+        const mailOptions = { 
+        from: '"ImmaCare+" <bernejojoshua@gmail.com>', 
+        to: email, 
+        subject: "Email Verification for ImmaCare+", 
+        html: 
+        `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h2>Welcome to ImmaCare+</h2><p>Hi ${firstname},</p><p>Thank you for registering. Please click the button below to verify your email address and activate your account:</p><a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify My Email</a><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationLink}</p><p>Best regards,<br>The ImmaCare+ Team</p></div>` };
         await transporter.sendMail(mailOptions);
         res.status(201).json({ message: "User registered successfully. Please check your email to verify.", userId: savedUserProfile._id });
     } catch (err) {
@@ -1226,15 +1235,40 @@ app.post("/register", async (req, res) => {
         console.error("Registration error:", err);
         res.status(500).json({ message: "Server error during registration" });
     }
+
+    
 });
+
+
+// app.get("/verify-email", async (req, res) => {
+//     try {
+//         const { token } = req.query;
+//         if (!token) return res.status(400).send("<h3>Invalid verification link.</h3>");
+//         const account = await AccountInfo.findOneAndUpdate({ verification_token: token }, { $set: { is_verified: 1, verification_token: null } });
+//         if (!account) return res.status(400).send("<h3>Verification link is invalid or has already been used.</h3>");
+//         res.redirect("/login/login.html?verified=true");
+//     } catch (err) {
+//         console.error("Email verification error:", err);
+//         res.status(500).send("<h3>A server error occurred during email verification.</h3>");
+//     }
+// });
 
 app.get("/verify-email", async (req, res) => {
     try {
         const { token } = req.query;
         if (!token) return res.status(400).send("<h3>Invalid verification link.</h3>");
-        const account = await AccountInfo.findOneAndUpdate({ verification_token: token }, { $set: { is_verified: 1, verification_token: null } });
-        if (!account) return res.status(400).send("<h3>Verification link is invalid or has already been used.</h3>");
-        res.redirect("/login/login.html?verified=true");
+        
+        const account = await AccountInfo.findOneAndUpdate(
+            { verification_token: token }, 
+            { $set: { is_verified: 1, verification_token: null } }
+        );
+        
+        if (!account) {
+            return res.status(400).send("<h3>Verification link is invalid or has already been used.</h3>");
+        }
+        
+        // ✅ FIXED: Correct redirect path
+        res.redirect("/login?verified=true");
     } catch (err) {
         console.error("Email verification error:", err);
         res.status(500).send("<h3>A server error occurred during email verification.</h3>");
@@ -1350,7 +1384,9 @@ app.post("/createAccount", async (req, res) => {
         res.status(500).send({ message: "Error creating account" });
     }
 });
-
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "login", "login.html"));
+});
 // =================================================================
 // --- APPOINTMENT & BOOKING API ENDPOINTS ---
 // =================================================================
